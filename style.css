@@ -1,0 +1,19 @@
+/* style.css */
+body {
+  font-family: sans-serif;
+  background: #fdf6e3;
+  padding: 20px;
+  text-align: center;
+}
+#question {
+  font-size: 1.5em;
+  margin: 20px;
+}
+#choices button {
+  margin: 10px;
+  padding: 10px;
+  font-size: 1em;
+}
+#scoreboard {
+  margin-top: 20px;
+}

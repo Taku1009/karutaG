@@ -1,0 +1,26 @@
+<!-- index.html -->
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>百人一首かるた</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <h1>百人一首かるた</h1>
+  <div id="mode-buttons">
+    <button onclick="startGame()">スタート</button>
+    <button onclick="resetGame()">リセット</button>
+  </div>
+  <div id="quiz-area" style="display:none;">
+    <div id="question">上の句がここに表示されます</div>
+    <div id="choices"></div>
+    <div id="timer">残り時間: <span id="time">10</span>秒</div>
+    <div id="scoreboard">正解: <span id="correct">0</span> / 不正解: <span id="wrong">0</span> | 正解率: <span id="accuracy">0</span>%</div>
+    <button onclick="retryGame()">再挑戦</button>
+  </div>
+  <script src="poems.js"></script>
+  <script src="script.js"></script>
+</body>
+</html>
