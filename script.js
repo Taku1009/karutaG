@@ -1,82 +1,132 @@
-let current = 0;
+let currentPoem;
 let score = 0;
-let correct = 0;
-let total = 0;
+let totalAnswered = 0;
+let highScore = 0;
 let timer;
-const timeLimit = 10;
-
-function startGame() {
-  poems = shuffle([...poems]);
-  current = 0;
-  score = 0;
-  correct = 0;
-  total = 0;
-  showPoem();
-}
-
-function showPoem() {
-  clearInterval(timer);
-  const poem = poems[current];
-  document.getElementById("upperPhrase").textContent = poem.upper;
-  const options = shuffle([poem.lower, ...getRandomLowers(poem.lower)]);
-  const optionsDiv = document.getElementById("options");
-  optionsDiv.innerHTML = "";
-  options.forEach(opt => {
-    const btn = document.createElement("button");
-    btn.textContent = opt;
-    btn.onclick = () => checkAnswer(opt);
-    optionsDiv.appendChild(btn);
-  });
-  startTimer();
-}
-
-function checkAnswer(selected) {
-  const poem = poems[current];
-  total++;
-  if (selected === poem.lower) {
-    score++;
-    correct++;
-  }
-  updateScore();
-  nextPoem();
-}
-
-function updateScore() {
-  document.getElementById("scoreValue").textContent = score;
-  const accuracy = total === 0 ? 0 : Math.round((correct / total) * 100);
-  document.getElementById("accuracyValue").textContent = accuracy;
-}
-
-function nextPoem() {
-  current++;
-  if (current >= poems.length) {
-    alert("終了！お疲れ様でした！");
-  } else {
-    showPoem();
-  }
-}
-
-function getRandomLowers(correctLower) {
-  const lowers = poems.map(p => p.lower).filter(l => l !== correctLower);
-  return shuffle(lowers).slice(0, 3);
-}
+let timeLeft = 10;
+let answered = false;
 
 function shuffle(array) {
   return array.sort(() => Math.random() - 0.5);
 }
 
+function loadHighScore() {
+  const saved = localStorage.getItem("karutaHighScore");
+  highScore = saved ? parseInt(saved) : 0;
+  document.getElementById("highscore").textContent = highScore;
+}
+
+function updateHighScore() {
+  if (score > highScore) {
+    highScore = score;
+    localStorage.setItem("karutaHighScore", highScore);
+    document.getElementById("highscore").textContent = highScore;
+  }
+}
+
+function updateAccuracy() {
+  const accuracy = totalAnswered > 0 ? Math.round((score / totalAnswered) * 100) : 0;
+  document.getElementById("accuracy").textContent = accuracy;
+}
+
 function startTimer() {
-  let time = timeLimit;
-  document.getElementById("time").textContent = time;
+  timeLeft = 10;
+  document.getElementById("timer").textContent = `残り時間: ${timeLeft}秒`;
   timer = setInterval(() => {
-    time--;
-    document.getElementById("time").textContent = time;
-    if (time <= 0) {
+    timeLeft--;
+    document.getElementById("timer").textContent = `残り時間: ${timeLeft}秒`;
+    if (timeLeft <= 0) {
       clearInterval(timer);
-      nextPoem();
+      if (!answered) {
+        totalAnswered++;
+        document.getElementById("feedback").textContent = "時間切れ！不正解。";
+        document.querySelectorAll('.choice').forEach(c => {
+          if (c.textContent === currentPoem.lower) c.classList.add("correct");
+        });
+        updateAccuracy();
+        updateHighScore();
+      }
     }
   }, 1000);
 }
 
-document.getElementById("restartBtn").onclick = startGame;
-window.onload = startGame;
+function nextQuestion() {
+  clearInterval(timer);
+  answered = false;
+  document.getElementById("feedback").textContent = "";
+
+  currentPoem = poems[Math.floor(Math.random() * poems.length)];
+
+  let choices = [currentPoem.lower];
+  while (choices.length < 3) {
+    const random = poems[Math.floor(Math.random() * poems.length)].lower;
+    if (!choices.includes(random)) choices.push(random);
+  }
+  choices = shuffle(choices);
+
+  document.getElementById("question").textContent = currentPoem.upper;
+
+  const choicesDiv = document.getElementById("choices");
+  choicesDiv.innerHTML = "";
+  choices.forEach(choice => {
+    const div = document.createElement("div");
+    div.className = "choice";
+    div.textContent = choice;
+    div.onclick = () => checkAnswer(choice, div);
+    choicesDiv.appendChild(div);
+  });
+
+  startTimer();
+}
+
+function checkAnswer(choice, element) {
+  if (answered) return;
+  answered = true;
+  clearInterval(timer);
+  totalAnswered++;
+
+  const isCorrect = choice === currentPoem.lower;
+  const feedback = document.getElementById("feedback");
+
+  if (isCorrect) {
+    feedback.textContent = "正解！";
+    element.classList.add("correct");
+    score++;
+  } else {
+    feedback.textContent = "残念、不正解。";
+    element.classList.add("wrong");
+    document.querySelectorAll('.choice').forEach(c => {
+      if (c.textContent === currentPoem.lower) c.classList.add("correct");
+    });
+  }
+
+  document.getElementById("score").textContent = score;
+  updateAccuracy();
+  updateHighScore();
+}
+
+function retryGame() {
+  clearInterval(timer);
+  score = 0;
+  totalAnswered = 0;
+  document.getElementById("score").textContent = score;
+  document.getElementById("feedback").textContent = "ゲームを再開しました！";
+  updateAccuracy();
+  nextQuestion();
+}
+
+function resetAll() {
+  clearInterval(timer);
+  score = 0;
+  totalAnswered = 0;
+  highScore = 0;
+  localStorage.removeItem("karutaHighScore");
+  document.getElementById("score").textContent = score;
+  document.getElementById("highscore").textContent = highScore;
+  document.getElementById("feedback").textContent = "スコアとハイスコアをリセットしました！";
+  updateAccuracy();
+  nextQuestion();
+}
+
+loadHighScore();
+nextQuestion();
