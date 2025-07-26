@@ -1,84 +1,82 @@
-// script.js
-let current = 0, correct = 0, wrong = 0, timer;
-const question = document.getElementById("question");
-const choices = document.getElementById("choices");
-const timeDisplay = document.getElementById("time");
-const correctDisplay = document.getElementById("correct");
-const wrongDisplay = document.getElementById("wrong");
-const accuracyDisplay = document.getElementById("accuracy");
+let current = 0;
+let score = 0;
+let correct = 0;
+let total = 0;
+let timer;
+const timeLimit = 10;
+
+function startGame() {
+  poems = shuffle([...poems]);
+  current = 0;
+  score = 0;
+  correct = 0;
+  total = 0;
+  showPoem();
+}
+
+function showPoem() {
+  clearInterval(timer);
+  const poem = poems[current];
+  document.getElementById("upperPhrase").textContent = poem.upper;
+  const options = shuffle([poem.lower, ...getRandomLowers(poem.lower)]);
+  const optionsDiv = document.getElementById("options");
+  optionsDiv.innerHTML = "";
+  options.forEach(opt => {
+    const btn = document.createElement("button");
+    btn.textContent = opt;
+    btn.onclick = () => checkAnswer(opt);
+    optionsDiv.appendChild(btn);
+  });
+  startTimer();
+}
+
+function checkAnswer(selected) {
+  const poem = poems[current];
+  total++;
+  if (selected === poem.lower) {
+    score++;
+    correct++;
+  }
+  updateScore();
+  nextPoem();
+}
+
+function updateScore() {
+  document.getElementById("scoreValue").textContent = score;
+  const accuracy = total === 0 ? 0 : Math.round((correct / total) * 100);
+  document.getElementById("accuracyValue").textContent = accuracy;
+}
+
+function nextPoem() {
+  current++;
+  if (current >= poems.length) {
+    alert("終了！お疲れ様でした！");
+  } else {
+    showPoem();
+  }
+}
+
+function getRandomLowers(correctLower) {
+  const lowers = poems.map(p => p.lower).filter(l => l !== correctLower);
+  return shuffle(lowers).slice(0, 3);
+}
 
 function shuffle(array) {
   return array.sort(() => Math.random() - 0.5);
 }
 
-function startGame() {
-  correct = 0;
-  wrong = 0;
-  updateScore();
-  document.getElementById("quiz-area").style.display = "block";
-  document.getElementById("mode-buttons").style.display = "none";
-  poemsUsed = shuffle([...poems]);
-  nextQuestion();
-}
-
-function updateScore() {
-  correctDisplay.textContent = correct;
-  wrongDisplay.textContent = wrong;
-  const total = correct + wrong;
-  accuracyDisplay.textContent = total ? Math.round((correct / total) * 100) : 0;
-}
-
-function resetGame() {
-  location.reload();
-}
-
-function retryGame() {
-  startGame();
-}
-
-function nextQuestion() {
-  if (poemsUsed.length === 0) {
-    alert("終了！正解数: " + correct);
-    return;
-  }
-
-  const p = poemsUsed.pop();
-  current = p;
-  question.textContent = p.upper;
-
-  const options = shuffle([
-    p.lower,
-    ...shuffle(poems.filter(x => x !== p)).slice(0, 3).map(x => x.lower),
-  ]);
-
-  choices.innerHTML = "";
-  options.forEach(opt => {
-    const btn = document.createElement("button");
-    btn.textContent = opt;
-    btn.onclick = () => {
-      clearInterval(timer);
-      if (opt === p.lower) {
-        correct++;
-      } else {
-        wrong++;
-      }
-      updateScore();
-      nextQuestion();
-    };
-    choices.appendChild(btn);
-  });
-
-  let time = 10;
-  timeDisplay.textContent = time;
-  clearInterval(timer);
+function startTimer() {
+  let time = timeLimit;
+  document.getElementById("time").textContent = time;
   timer = setInterval(() => {
     time--;
-    timeDisplay.textContent = time;
-    if (time === 0) {
+    document.getElementById("time").textContent = time;
+    if (time <= 0) {
       clearInterval(timer);
-      wrong++;
-      updateScore();
-      nextQuestion();
+      nextPoem();
     }
   }, 1000);
 }
+
+document.getElementById("restartBtn").onclick = startGame;
+window.onload = startGame;
